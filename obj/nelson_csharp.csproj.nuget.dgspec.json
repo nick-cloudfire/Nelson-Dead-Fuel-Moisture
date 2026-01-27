@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj": {}
+  },
+  "projects": {
+    "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
+        "projectName": "nelson_csharp",
+        "projectPath": "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
+        "packagesPath": "/home/nick/.nuget/packages/",
+        "outputPath": "/home/nick/elmfire_validation/Data/nelson_csharp/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/nick/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "MaxRev.Gdal.Core": {
+              "target": "Package",
+              "version": "[3.12.1.440, )"
+            },
+            "MaxRev.Gdal.LinuxRuntime.Minimal": {
+              "target": "Package",
+              "version": "[3.12.1.440, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

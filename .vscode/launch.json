@@ -1,0 +1,52 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET (WSL) nelson_csharp – FirePairs 00001",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/bin/Debug/net8.0/nelson_csharp",
+      "args": [
+        "/home/nick/elmfire_validation/FirePairs/00001/inputs/weather.wxs",
+        "/home/nick/elmfire_validation/FirePairs/00001/inputs/dem.bsq",
+        "/home/nick/elmfire_validation/FirePairs/00001/inputs/slp.bsq",
+        "/home/nick/elmfire_validation/FirePairs/00001/inputs/asp.bsq",
+        "/home/nick/elmfire_validation/FirePairs/00001/inputs/cc.bsq",
+        "40",
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+    },
+    {
+      "name": "Profile (WSL) nelson_csharp – dotnet-trace (speedscope)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+
+      "program": "dotnet-trace",
+      "args": [
+        "collect",
+        "--format", "speedscope",
+        "--output", "${workspaceFolder}/trace_00001.speedscope.json",
+        "--",
+
+        "${workspaceFolder}/bin/Debug/net8.0/nelson_csharp",
+        "/home/nick/elmfire_validation/FirePairs/00001/inputs/weather.wxs",
+        "40",
+        "-120",
+        "500",
+        "8",
+        "45",
+        "20",
+        "10",
+        "False"
+      ],
+
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ]
+}

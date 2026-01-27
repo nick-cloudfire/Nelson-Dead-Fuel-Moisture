@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "+esSQekCThwoQrJiNTTODN42d5zxqbIdai8MeNWihMyb6DIF4NL1lf7dqe6quxMBidoGUmnSVY0AQrtghUMv3A==",
+  "success": true,
+  "projectFilePath": "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
+  "expectedPackageFiles": [
+    "/home/nick/.nuget/packages/maxrev.gdal.core/3.12.1.440/maxrev.gdal.core.3.12.1.440.nupkg.sha512",
+    "/home/nick/.nuget/packages/maxrev.gdal.linuxruntime.minimal/3.12.1.440/maxrev.gdal.linuxruntime.minimal.3.12.1.440.nupkg.sha512",
+    "/home/nick/.nuget/packages/maxrev.gdal.linuxruntime.minimal.arm64/3.12.1.440/maxrev.gdal.linuxruntime.minimal.arm64.3.12.1.440.nupkg.sha512",
+    "/home/nick/.nuget/packages/maxrev.gdal.linuxruntime.minimal.x64/3.12.1.440/maxrev.gdal.linuxruntime.minimal.x64.3.12.1.440.nupkg.sha512"
+  ],
+  "logs": []
+}
