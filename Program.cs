@@ -47,82 +47,57 @@ internal static class Program
         var cumRainCm = row.HourlyPcpCm;
         double lat,lon = 0;
 
-        int[,] bins = new int[width,length];
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < length; y++)
-            {
-                bins[x,y] += (int)(cc[x,y]/15);
-                bins[x,y] += (int)(asp[x,y]/45) * 10;
-                bins[x,y] += (int)(slp[x,y]/10) * 100;
-                bins[x,y] += (int)(dem[x,y]/200) * 1000; 
-            }
-        }
-        int max = bins.Cast<int>().Max();
-        int[] unique = new int [max+1];
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < length; y++)
-            {
-                unique[bins[x,y]]++; 
-            }
-        }
+        uint[,] bins = new uint[width,length];
 
-        DeadFuelMoisture[] dfm1 = new DeadFuelMoisture[max + 1];
-        DeadFuelMoisture[] dfm10 = new DeadFuelMoisture[max + 1];
-        DeadFuelMoisture[] dfm100 = new DeadFuelMoisture[max + 1];
+        Dictionary<uint, DeadFuelMoistureWrapper> deadfuel = new Dictionary<uint, DeadFuelMoistureWrapper>(8600);
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < length; y++)
+            {
+                if (cc[x,y] == mi.NoDataValue || asp[x,y] == mi.NoDataValue || slp[x,y] == mi.NoDataValue || dem[x,y] == mi.NoDataValue)
+                {
+                    bins[x,y]=0;
+                }
+                else
+                {
+                    bins[x,y] += (uint)(cc[x,y]/15);
+                    bins[x,y] += (uint)(asp[x,y]/45) * 10;
+                    bins[x,y] += (uint)(slp[x,y]/10) * 100;
+                    bins[x,y] += (uint)(dem[x,y]/200) * 1000; 
+                }
+                if (!deadfuel.ContainsKey(bins[x, y]))
+                {
+                    deadfuel.Add(bins[x,y], new DeadFuelMoistureWrapper());
+                }
+            }
+        }
         (lat, lon) = BilReader.PixelToLatLon(mi, (int)(width/2), (int)(length/2));
         float[,] m1Raster = new float[width,length];
         float[,] m10Raster = new float[width,length];
         float[,] m100Raster = new float[width,length];
-        float[] mc1 = new float[max + 1];
-        float[] mc10 = new float[max + 1];
-        float[] mc100 = new float[max + 1];
-        var demCell = new int[max + 1];
-        var slpCell = new int[max + 1];
-        var aspCell = new int[max + 1];
-        var ccCell  = new int[max + 1];
+        float[] mc1 = new float[deadfuel.Count];
+        float[] mc10 = new float[deadfuel.Count];
+        float[] mc100 = new float[deadfuel.Count];
+        var demCell = new int[deadfuel.Count];
+        var slpCell = new int[deadfuel.Count];
+        var aspCell = new int[deadfuel.Count];
+        var ccCell  = new int[deadfuel.Count];
 
-        for (int idx = 0; idx < max + 1; idx++)
+        foreach (uint idx in deadfuel.Keys)
         {
-            demCell[idx] = ((idx / 1000) * 200) + 100;
-            slpCell[idx] = ((idx / 100) % 10) * 10 + 5;
-            aspCell[idx] = ((idx / 10) % 10) * 45 + 23;
-            ccCell[idx]  = (idx % 10) * 15 + 8;
+            deadfuel[idx].dem = (int)((idx / 1000) * 200) + 100;
+            deadfuel[idx].slp = (int)((idx / 100) % 10) * 10 + 5;
+            deadfuel[idx].asp = (int)((idx / 10) % 10) * 45 + 23;
+            deadfuel[idx].cc  = (int)(idx % 10) * 15 + 8;
         }
 
 
-        for (int i = 0; i < max + 1; i++)
+        foreach (uint idx in deadfuel.Keys)
         {
-            if (unique[i] <=0) continue;
-            dfm1[i]=DeadFuelMoisture.createDeadFuelMoisture1("1h");
-            dfm1[i].initializeStick();
-            dfm10[i]=DeadFuelMoisture.createDeadFuelMoisture10("10h");
-            dfm10[i].initializeStick();
-            dfm100[i]=DeadFuelMoisture.createDeadFuelMoisture100("100h");
-            dfm100[i].initializeStick();
-
-            double solarWm2 = SunRadiation.SimpleRadiation(lat,lon,date,row.Hour,row.CloudCov,demCell[i],slpCell[i],aspCell[i],ccCell[i]);
-
-            dfm1[i].initializeEnvironment(
-                row.Year, row.Month, row.Day, row.Hour, row.Minute, 0,
-                row.TempC, rhFrac, solarWm2, cumRainCm,
-                row.TempC, rhFrac, 0.08
-            );
-
-            dfm10[i].initializeEnvironment(
-                row.Year, row.Month, row.Day, row.Hour, row.Minute, 0,
-                row.TempC, rhFrac, solarWm2, cumRainCm,
-                row.TempC, rhFrac, 0.10
-            );
-
-            dfm100[i].initializeEnvironment(
-                row.Year, row.Month, row.Day, row.Hour, row.Minute, 0,
-                row.TempC, rhFrac, solarWm2, cumRainCm,
-                row.TempC, rhFrac, 0.12
-            );
+            double solarWm2 = SunRadiation.SimpleRadiation(lat,lon,date,row.Hour,row.CloudCov,deadfuel[idx].dem,deadfuel[idx].slp,deadfuel[idx].asp,deadfuel[idx].cc);
+            deadfuel[idx].initializeEnvironments(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
         }
-        for (int thour = 1; thour < rows.Count; thour++)
+        for (int thour = 0; thour < rows.Count; thour++)
         {
             Console.Write($"\rStarting Hour {thour}      ");
 
@@ -130,37 +105,29 @@ internal static class Program
             date = new DateTime(row.Year,row.Month,row.Day).DayOfYear;
             rhFrac = row.RH / 100.0;
             cumRainCm += row.HourlyPcpCm;
-            
-            Parallel.For(0, unique.Length, x =>
+            Parallel.ForEach(deadfuel, kvp =>
             {
-                if (unique[x] <=0) return;
-                double solarWm2 = SunRadiation.SimpleRadiation(lat,lon,date,row.Hour,row.CloudCov,demCell[x],slpCell[x],aspCell[x],ccCell[x]);
+                uint idx = kvp.Key;
+                double solarWm2 = SunRadiation.SimpleRadiation(lat,lon,date,row.Hour,row.CloudCov,deadfuel[idx].dem,deadfuel[idx].slp,deadfuel[idx].asp,deadfuel[idx].cc);
                 
-                dfm1[x].update(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
-                dfm10[x].update(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
-                dfm100[x].update(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
+                deadfuel[idx].Update(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
 
-                if (thour - preconditioningHours > 0)
+                if (thour > preconditioningHours)
                 {
-                    float m1 = dfm1[x].meanWtdMoisture();
-                    float m10 = dfm10[x].meanWtdMoisture();
-                    float m100 = dfm100[x].meanWtdMoisture();
-                    mc1[x] = m1;
-                    mc10[x] = m10;
-                    mc100[x] = m100;
+                    deadfuel[idx].GetMoisture();
                     //mc1[x] = (float)(4 * helpers.WxsWeatherReader.getEMC(row.RH, row.TempC) / 100.0 + m10) / 5f;
                 }
             });
-            if (thour - preconditioningHours > 0)
+            if (thour > preconditioningHours)
             {
                 for (int k = 0; k < width; k++)
                 {
                     for (int m = 0; m < length; m++)
                     {
                         var index = bins[k,m];
-                        m1Raster[k,m]=mc1[index]*100;
-                        m10Raster[k,m]=mc10[index]*100;
-                        m100Raster[k,m]=mc100[index]*100;
+                        m1Raster[k,m]=deadfuel[index].m1*100;
+                        m10Raster[k,m]=deadfuel[index].m10*100;
+                        m100Raster[k,m]=deadfuel[index].m100*100;
                     }
                 }
                 BilReader.BsqAppendBand(hdrPath,parentDir + "/m1.bsq",m1Raster);

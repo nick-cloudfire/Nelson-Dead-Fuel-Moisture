@@ -321,6 +321,7 @@
 /home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/nelson_csharp.AssemblyInfoInputs.cache
 /home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/nelson_csharp.AssemblyInfo.cs
 /home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/nelson_csharp.csproj.CoreCompileInputs.cache
+/home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/nelson_csharp.sourcelink.json
 /home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/nelson_csharp.csproj.CopyComplete
 /home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/nelson_csharp.dll
 /home/nick/elmfire_validation/Data/nelson_csharp/obj/Release/net8.0/refint/nelson_csharp.dll

@@ -289,7 +289,7 @@ namespace PREACT.Fire
 
         public DeadFuelMoisture(double radius = 0.64, string name = "" )            
         {
-            m_semTime = new SemTime();
+            this.m_semTime = new SemTime();
             initializeParameters(radius, name);
             return;
         }
@@ -2374,5 +2374,50 @@ namespace PREACT.Fire
             return;
         }
     }    
+    public class DeadFuelMoistureWrapper
+    {
+        public DeadFuelMoisture _1h, _10h, _100h;
+        public int dem, slp, asp, cc;
+        public float m1, m10, m100;
+
+        public DeadFuelMoistureWrapper()
+        {
+            _1h = DeadFuelMoisture.createDeadFuelMoisture1("1h");
+            _10h = DeadFuelMoisture.createDeadFuelMoisture10("10h");
+            _100h = DeadFuelMoisture.createDeadFuelMoisture100("100h");
+        }
+        public void initializeEnvironments(int year, int month, int day, int hour, int minute, int second, double TempC, double rhFrac, double solarWm2, double cumRainCm)
+        {
+            _1h.initializeEnvironment(
+                year, month, day, hour, minute, second,
+                TempC, rhFrac, solarWm2, cumRainCm,
+                TempC, rhFrac, 0.08
+            );
+
+            _10h.initializeEnvironment(
+                year, month, day, hour, minute, second,
+                TempC, rhFrac, solarWm2, cumRainCm,
+                TempC, rhFrac, 0.08
+            );
+
+            _100h.initializeEnvironment(
+                year, month, day, hour, minute, second,
+                TempC, rhFrac, solarWm2, cumRainCm,
+                TempC, rhFrac, 0.08
+            );
+        }
+        public void Update(int year, int month, int day, int hour, int minute, int second, double at, double rh, double sW, double rcum)
+        {
+            _1h.update(year, month, day, hour, minute, second, at, rh, sW, rcum);
+            _10h.update(year, month, day, hour, minute, second, at, rh, sW, rcum);
+            _100h.update(year, month, day, hour, minute, second, at, rh, sW, rcum);
+        }
+        public void GetMoisture()
+        {
+            m1 = _1h.meanWtdMoisture();
+            m10 = _10h.meanWtdMoisture();
+            m100 = _100h.meanWtdMoisture();
+        }
+    }
 }
 

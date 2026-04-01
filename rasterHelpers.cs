@@ -23,11 +23,15 @@ namespace helpers
             public bool? IsNorthHemisphere;
             public string Datum = "";     // often "WGS-84"
             public string Units = "";
+
+            // NEW: ENVI "data ignore value" (NoData)
+            public double? NoDataValue;
         }
 
         /// <summary>
-        /// Reads ENVI "map info" from a .hdr file.
+        /// Reads ENVI "map info" (and NoData "data ignore value") from a .hdr file.
         /// Requires a line like: map info = {UTM, 1, 1, 500000, 4100000, 30, 30, 17, North, WGS-84, units=Meters}
+        /// NoData line typically: data ignore value = -9999
         /// </summary>
         public static MapInfo ReadMapInfo(string hdrPath)
         {
@@ -35,19 +39,39 @@ namespace helpers
                 throw new FileNotFoundException("ENVI .hdr file not found.", hdrPath);
 
             string? mapInfoRaw = null;
+            double? noData = null;
 
             foreach (var rawLine in File.ReadLines(hdrPath))
             {
                 var line = rawLine.Trim();
-                if (line.StartsWith("map info", StringComparison.OrdinalIgnoreCase))
+
+                // map info = {...}
+                if (mapInfoRaw == null && line.StartsWith("map info", StringComparison.OrdinalIgnoreCase))
+                {
+                    int eq = line.IndexOf('=');
+                    if (eq >= 0)
+                        mapInfoRaw = line.Substring(eq + 1).Trim();
+                }
+
+                // NEW: data ignore value = ...
+                if (noData == null && line.StartsWith("data ignore value", StringComparison.OrdinalIgnoreCase))
                 {
                     int eq = line.IndexOf('=');
                     if (eq >= 0)
                     {
-                        mapInfoRaw = line.Substring(eq + 1).Trim();
-                        break;
+                        var v = line.Substring(eq + 1).Trim();
+
+                        // Allow braces just in case (rare, but harmless)
+                        v = v.Trim().TrimStart('{').TrimEnd('}');
+
+                        if (double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out var nd))
+                            noData = nd;
                     }
                 }
+
+                // Early-out if we have both
+                if (mapInfoRaw != null && noData != null)
+                    break;
             }
 
             if (string.IsNullOrWhiteSpace(mapInfoRaw))
@@ -57,8 +81,6 @@ namespace helpers
             mapInfoRaw = mapInfoRaw.Trim();
             mapInfoRaw = mapInfoRaw.TrimStart('{').TrimEnd('}');
 
-            // Split by commas, but ENVI is simple enough that commas are safe here.
-            // (If you have quoted commas inside strings, you’ll need a CSV/quoted parser.)
             var parts = SplitCsvLoose(mapInfoRaw);
 
             if (parts.Count < 6)
@@ -74,38 +96,37 @@ namespace helpers
                 RefEasting = D(parts[3]),
                 RefNorthing = D(parts[4]),
                 PixelSizeX = D(parts[5]),
-                PixelSizeY = (parts.Count > 6) ? D(parts[6]) : D(parts[5]) // sometimes only one is provided
-            };
+                PixelSizeY = (parts.Count > 6) ? D(parts[6]) : D(parts[5]),
+                NoDataValue = noData // NEW
+    };
 
-            // Try to pull UTM zone + hemisphere if present
-            // Typical ENVI UTM: [0]=UTM, [7]=zone, [8]=North/South
-            for (int i = 7; i < parts.Count; i++)
-            {
-                var p = parts[i].Trim();
+    // Try to pull UTM zone + hemisphere if present
+    for (int i = 7; i < parts.Count; i++)
+    {
+        var p = parts[i].Trim();
 
-                if (mi.UtmZone == null && int.TryParse(p, NumberStyles.Integer, CultureInfo.InvariantCulture, out int z))
-                    mi.UtmZone = z;
+        if (mi.UtmZone == null && int.TryParse(p, NumberStyles.Integer, CultureInfo.InvariantCulture, out int z))
+            mi.UtmZone = z;
 
-                if (mi.IsNorthHemisphere == null)
-                {
-                    if (p.Equals("North", StringComparison.OrdinalIgnoreCase)) mi.IsNorthHemisphere = true;
-                    if (p.Equals("South", StringComparison.OrdinalIgnoreCase)) mi.IsNorthHemisphere = false;
-                }
-
-                // Datum often appears as WGS-84
-                if (string.IsNullOrEmpty(mi.Datum) &&
-                    (p.Contains("WGS", StringComparison.OrdinalIgnoreCase) || p.Contains("NAD", StringComparison.OrdinalIgnoreCase)))
-                {
-                    mi.Datum = p;
-                }
-
-                // units=...
-                if (p.StartsWith("units", StringComparison.OrdinalIgnoreCase))
-                    mi.Units = p;
-            }
-
-            return mi;
+        if (mi.IsNorthHemisphere == null)
+        {
+            if (p.Equals("North", StringComparison.OrdinalIgnoreCase)) mi.IsNorthHemisphere = true;
+            if (p.Equals("South", StringComparison.OrdinalIgnoreCase)) mi.IsNorthHemisphere = false;
         }
+
+        if (string.IsNullOrEmpty(mi.Datum) &&
+            (p.Contains("WGS", StringComparison.OrdinalIgnoreCase) || p.Contains("NAD", StringComparison.OrdinalIgnoreCase)))
+        {
+            mi.Datum = p;
+        }
+
+        if (p.StartsWith("units", StringComparison.OrdinalIgnoreCase))
+            mi.Units = p;
+    }
+
+    return mi;
+}
+
 
         /// <summary>
         /// Convert pixel coordinates (0-based x,y) to projected coordinates (Easting, Northing),
