@@ -1692,11 +1692,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
+      "projectUniqueName": "/home/nick/elmfire/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
       "projectName": "nelson_csharp",
-      "projectPath": "/home/nick/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
+      "projectPath": "/home/nick/elmfire/elmfire_validation/Data/nelson_csharp/nelson_csharp.csproj",
       "packagesPath": "/home/nick/.nuget/packages/",
-      "outputPath": "/home/nick/elmfire_validation/Data/nelson_csharp/obj/",
+      "outputPath": "/home/nick/elmfire/elmfire_validation/Data/nelson_csharp/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/nick/.nuget/NuGet/NuGet.Config"
@@ -1748,7 +1748,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.125/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.126/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -28,12 +28,21 @@ internal static class Program
         string canopyCoverPath = args.Length > 4 ? args[4] : "";
         long preconditioningHours = args.Length > 5 ? long.Parse(args[5], Inv) * 24 : 0;
 
+        Console.WriteLine($"wxs:              {wxsPath}");
+        Console.WriteLine($"dem:              {demPath}");
+        Console.WriteLine($"slope:            {slopePath}");
+        Console.WriteLine($"aspect:           {aspectPath}");
+        Console.WriteLine($"canopy cover:     {canopyCoverPath}");
+        Console.WriteLine($"preconditioning:  {args[5]} days ({preconditioningHours} hours)");
+
         var rows = WxsWeatherReader.ReadWxs(wxsPath);
+        Console.WriteLine($"Weather rows:     {rows.Count}");
         var dem = BilReader.ReadSingleBandBsqAsInt2D(demPath, 0);
         var slp = BilReader.ReadSingleBandBsqAsInt2D(slopePath, 0);
         var asp = BilReader.ReadSingleBandBsqAsInt2D(aspectPath, 0);
         var cc = BilReader.ReadSingleBandBsqAsInt2D(canopyCoverPath, 0);
-        var parentDir = Path.GetDirectoryName(demPath);
+        var parentDir = Path.GetDirectoryName(Path.GetFullPath(demPath));
+        Console.WriteLine($"Output dir:       {parentDir}");
 
         string hdrPath = System.IO.Path.ChangeExtension(demPath, ".hdr");
         var mi = BilReader.ReadMapInfo(hdrPath);
@@ -71,7 +80,10 @@ internal static class Program
                 }
             }
         }
+        Console.WriteLine($"Grid size:        {width} x {length}  ({dem.Length} cells)");
+        Console.WriteLine($"Unique bins:      {deadfuel.Count}");
         (lat, lon) = BilReader.PixelToLatLon(mi, (int)(width/2), (int)(length/2));
+        Console.WriteLine($"Center lat/lon:   {lat:F4}, {lon:F4}");
         float[,] m1Raster = new float[width,length];
         float[,] m10Raster = new float[width,length];
         float[,] m100Raster = new float[width,length];
@@ -97,9 +109,11 @@ internal static class Program
             double solarWm2 = SunRadiation.SimpleRadiation(lat,lon,date,row.Hour,row.CloudCov,deadfuel[idx].dem,deadfuel[idx].slp,deadfuel[idx].asp,deadfuel[idx].cc);
             deadfuel[idx].initializeEnvironments(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
         }
+        Console.WriteLine($"Running {rows.Count} hours (BSQ output starts after hour {preconditioningHours})...");
+        int bandsWritten = 0;
         for (int thour = 0; thour < rows.Count; thour++)
         {
-            Console.Write($"\rStarting Hour {thour}      ");
+            Console.Write($"\rHour {thour}/{rows.Count - 1}  bands written: {bandsWritten}      ");
 
             row = rows[thour];
             date = new DateTime(row.Year,row.Month,row.Day).DayOfYear;
@@ -133,9 +147,11 @@ internal static class Program
                 BilReader.BsqAppendBand(hdrPath,parentDir + "/m1.bsq",m1Raster);
                 BilReader.BsqAppendBand(hdrPath,parentDir + "/m10.bsq",m10Raster);
                 BilReader.BsqAppendBand(hdrPath,parentDir + "/m100.bsq",m100Raster);
-            }     
+                bandsWritten++;
+            }
         }
         Console.WriteLine();
+        Console.WriteLine($"Done. Wrote {bandsWritten} band(s) to {parentDir}/m1.bsq, m10.bsq, m100.bsq");
         return 0;
     }
 
