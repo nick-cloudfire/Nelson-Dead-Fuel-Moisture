@@ -109,7 +109,7 @@ internal static class Program
             double solarWm2 = SunRadiation.SimpleRadiation(lat,lon,date,row.Hour,row.CloudCov,deadfuel[idx].dem,deadfuel[idx].slp,deadfuel[idx].asp,deadfuel[idx].cc);
             deadfuel[idx].initializeEnvironments(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
         }
-        Console.WriteLine($"Running {rows.Count} hours (BSQ output starts after hour {preconditioningHours})...");
+        Console.WriteLine($"Running {rows.Count} hours (BSQ output starts at hour {preconditioningHours}, 0-based)...");
         int bandsWritten = 0;
         for (int thour = 0; thour < rows.Count; thour++)
         {
@@ -126,13 +126,15 @@ internal static class Program
                 
                 deadfuel[idx].Update(row.Year, row.Month, row.Day, row.Hour, row.Minute, 0, row.TempC, rhFrac, solarWm2, cumRainCm);
 
-                if (thour > preconditioningHours)
+                if (thour >= preconditioningHours)
                 {
                     deadfuel[idx].GetMoisture();
                     //mc1[x] = (float)(4 * helpers.WxsWeatherReader.getEMC(row.RH, row.TempC) / 100.0 + m10) / 5f;
                 }
             });
-            if (thour > preconditioningHours)
+            // Band 1 is the first hour after the preconditioning period, i.e. weather row
+            // `preconditioningHours` (0-based) - the same hour as the first fire-period weather row.
+            if (thour >= preconditioningHours)
             {
                 for (int k = 0; k < width; k++)
                 {
